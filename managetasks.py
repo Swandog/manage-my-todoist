@@ -7,20 +7,25 @@ from todoist_api_python.api import TodoistAPI
 api = TodoistAPI(api_token)
 print(api)
 
-def find_tasks_i_do_every_day():
-    query_filter="#Do\ Every\ Day & /Tasks\ To\ Do\ Every\ Day"
-    tasks=[t for tl in api.filter_tasks(query=query_filter) for t in tl ]
-    return tasks
+def find_one_expected(itera, filtera):
+    res=[thing for things in itera for thing in things if filtera(thing)]
+    if len(res) != 1:
+        raise RuntimeError("WHA HAPPEN")
 
+    return res[0]
 
-def find_everyday_tasks_to_create(tasks):
-    exit(1)
+do_every_day_project=find_one_expected(api.get_projects(), lambda p: p.name == "Do Every Day")
+print(do_every_day_project)
 
-# Find tasks to do every day
-tasks_i_do_every_day=find_tasks_i_do_every_day()
-# print(tasks_i_do_every_day)
+tasks_to_do_every_day_section=find_one_expected(api.get_sections(project_id=do_every_day_project.id), lambda s: s.name == "Tasks To Do Every Day")
+print(tasks_to_do_every_day_section)
+
+tasks_i_do_every_day=[task for tasks in api.get_tasks(section_id=tasks_to_do_every_day_section.id) for task in tasks]
+
 for x in tasks_i_do_every_day:
     print(x.content)
 
 # Filter out tasks already in "Today" project
-tasks_to_add=find_everyday_tasks_to_create(tasks_i_do_every_day)
+tasks_to_add=[]
+
+print(tasks_to_add)
