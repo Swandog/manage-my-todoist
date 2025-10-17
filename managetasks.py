@@ -3,11 +3,10 @@ import os
 import logging
 
 logger=logging.getLogger(__name__)
-loglevel = os.environ.get("LOG_LEVEL")
-if loglevel:
-    logger.setLevel(loglevel)
-    sh=logging.StreamHandler()
-    logger.addHandler(sh)
+loglevel = os.environ.get("LOG_LEVEL") or "INFO"
+logger.setLevel(loglevel)
+sh=logging.StreamHandler()
+logger.addHandler(sh)
 
 every_day_label="Every Day"
 once_a_week_label="Once_A_Week"
@@ -65,13 +64,13 @@ for task in tasks_i_do_every_day:
         logger.debug(f"task {describe_task(task)} was not found in Today, marking it for addition")
         tasks_to_add.append(task)
 
-print(f"Found {len(tasks_to_add)} tasks to add")
+logger.info(f"Found {len(tasks_to_add)} tasks to add")
 
 # Add the tasks
 incoming_section=find_section_in_project(today_project, "Incoming")
 logger.debug(f"incoming_section = {incoming_section}")
 for task in tasks_to_add:
-    print(f"\tAdding task '{task.content}'")
+    logger.info(f"\tAdding task '{task.content}'")
     api.add_task(project_id=today_project.id, section_id=incoming_section.id, content=task.content, labels=[every_day_label])
 
 ### Slower Recurrences!
@@ -83,7 +82,7 @@ for task in oawt_tasks:
     logger.debug(f"Examining task {describe_task(task)} in Once A Week")
     if not task.parent_id and task.due:
         if task.due.date < datetime.now():
-            print(f"Recurring task {describe_task(task)} is overdue ({task.due.date}), moving to Today/Incoming")
+            logger.info(f"Recurring task {describe_task(task)} is overdue ({task.due.date}), moving to Today/Incoming")
             api.move_task(task_id=task.id, section_id=incoming_section.id)
         else:
             logger.debug(f"Found recurring task {describe_task(task)} in Once A Week but it is not overdue ({task.due.date})")
@@ -95,7 +94,7 @@ for task in oawt_tasks_in_today:
     logger.debug(f"Examining Once A Week task {describe_task(task)} in Today")
     if not task.parent_id and task.due:
         if task.due.date > datetime.now():
-            print(f"Recurring task {describe_task(task)} is not due ({task.due.date}), moving to Once A Week")
+            logger.info(f"Recurring task {describe_task(task)} is not due ({task.due.date}), moving to Once A Week")
             # api.move_task(task_id=task.id, project_id=once_a_week_project.id)
         else:
             logger.debug(f"Found recurring task {describe_task(task)} in Today but it due ({task.due.date})")
