@@ -68,3 +68,19 @@ logger.debug(f"incoming_section = {incoming_section}")
 for task in tasks_to_add:
     print(f"\tAdding task '{task.content}'")
     api.add_task(project_id=today_project.id, section_id=incoming_section.id, content=task.content, labels=[every_day_label])
+
+### Slower Recurrences!
+once_a_week_project=find_project_by_name("Once A Week")
+oawt_tasks=[task for tasks in api.get_tasks(project_id=once_a_week_project.id) for task in tasks]
+no_due=[]
+for task in oawt_tasks:
+    if task.due:
+        print(f"{task.content:<120} ==> {task.due.string}")
+    else:
+        no_due.append(task)
+
+print([task.content for task in no_due])
+
+# If there are any Once A Week tasks in Today that are not due, move them to Once A Week
+# If there are any Once A Week tasks in Once A Week that are due, move them to Today/Incoming
+# (Also re-evaulate all recurrences for once a week tasks)
