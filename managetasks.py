@@ -95,9 +95,6 @@ for task in oawt_tasks_in_today:
     if not task.parent_id and task.due:
         if task.due.date > datetime.now():
             logger.info(f"Recurring task {describe_task(task)} is not due ({task.due.date}), moving to Once A Week")
-            # api.move_task(task_id=task.id, project_id=once_a_week_project.id)
+            api.move_task(task_id=task.id, project_id=once_a_week_project.id)
         else:
             logger.debug(f"Found recurring task {describe_task(task)} in Today but it due ({task.due.date})")
-
-
-# (Also re-evaulate all recurrences for once a week tasks)
