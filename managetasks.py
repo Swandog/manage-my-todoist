@@ -18,6 +18,9 @@ from todoist_api_python import models
 
 api = TodoistAPI(api_token)
 
+def describe_task(task: models.Task):
+    return f"task.id (\"{task.content}\")"
+
 def find_one_expected(itera, filtera):
     res=[thing for things in itera for thing in things if filtera(thing)]
     if len(res) != 1:
@@ -43,7 +46,7 @@ tasks_i_do_every_day=[task for tasks in api.get_tasks(section_id=tasks_to_do_eve
 
 logger.debug("tasks found that I do every day:")
 for x in tasks_i_do_every_day:
-    logger.debug(f"    {x.content}")
+    logger.debug(f"    {describe_task(x)}")
 
 # Filter out tasks already in "Today" project
 # First, find all possible tasks in the project
@@ -57,9 +60,9 @@ logger.debug(f"every_day_tasks_in_today = {every_day_tasks_in_today}")
 tasks_to_add=[]
 for task in tasks_i_do_every_day:
     if task.content in every_day_tasks_in_today:
-        logger.debug(f"task {task.id} ({task.content:<40}) was found in Today: {every_day_tasks_in_today[task.content].id}")
+        logger.debug(f"task {describe_task(task)} was found in Today: {every_day_tasks_in_today[task.content].id}")
     else:
-        logger.debug(f"task {task.id} ({task.content:<40}) was not found in Today, marking it for addition")
+        logger.debug(f"task {describe_task(task)} was not found in Today, marking it for addition")
         tasks_to_add.append(task)
 
 print(f"Found {len(tasks_to_add)} tasks to add")
@@ -73,8 +76,6 @@ for task in tasks_to_add:
 
 ### Slower Recurrences!
 # If there are any Once A Week tasks in Once A Week that are due, move them to Today/Incoming
-def describe_task(task: models.Task):
-    return f"task.id (\"{task.content}\")"
 
 once_a_week_project=find_project_by_name("Once A Week")
 oawt_tasks=[task for tasks in api.get_tasks(project_id=once_a_week_project.id) for task in tasks]
