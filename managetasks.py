@@ -10,7 +10,7 @@ if loglevel:
     logger.addHandler(sh)
 
 every_day_label="Every Day"
-once_a_week_label="Once A Week"
+once_a_week_label="Once_A_Week"
 api_token=os.environ["TODOIST_API_TOKEN"]
 
 from todoist_api_python.api import TodoistAPI
@@ -84,10 +84,21 @@ for task in oawt_tasks:
     if not task.parent_id and task.due:
         if task.due.date < datetime.now():
             print(f"Recurring task {describe_task(task)} is overdue ({task.due.date}), moving to Today/Incoming")
+            api.move_task(task_id=task.id, section_id=incoming_section.id)
         else:
             logger.debug(f"Found recurring task {describe_task(task)} in Once A Week but it is not overdue ({task.due.date})")
 
 
-
 # If there are any Once A Week tasks in Today that are not due, move them to Once A Week
+oawt_tasks_in_today=[task for tasks in api.get_tasks(project_id=today_project.id, label=once_a_week_label) for task in tasks]
+for task in oawt_tasks_in_today:
+    logger.debug(f"Examining Once A Week task {describe_task(task)} in Today")
+    if not task.parent_id and task.due:
+        if task.due.date > datetime.now():
+            print(f"Recurring task {describe_task(task)} is not due ({task.due.date}), moving to Once A Week")
+            # api.move_task(task_id=task.id, project_id=once_a_week_project.id)
+        else:
+            logger.debug(f"Found recurring task {describe_task(task)} in Today but it due ({task.due.date})")
+
+
 # (Also re-evaulate all recurrences for once a week tasks)
