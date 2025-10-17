@@ -39,10 +39,21 @@ for x in tasks_i_do_every_day:
     logger.debug(f"    {x.content}")
 
 # Filter out tasks already in "Today" project
+# First, find all possible tasks in the project
 today_project=find_project_by_name("Today")
 logger.debug(f"today_project = {today_project}")
 
+every_day_tasks_in_today={task.content: task for tasks in api.get_tasks(project_id=today_project.id, label="Every Day") for task in tasks}
+logger.debug(f"every_day_tasks_in_today = {every_day_tasks_in_today}")
 
+# Then, find all tasks without a matching mate in Today
 tasks_to_add=[]
+for task in tasks_i_do_every_day:
+    if task.content in every_day_tasks_in_today:
+        logger.debug(f"task {task.id} ({task.content:<40}) was found in Today: {every_day_tasks_in_today[task.content].id}")
+    else:
+        logger.debug(f"task {task.id} ({task.content:<40}) was not found in Today, marking it for addition")
+        tasks_to_add.append(task)
 
-print(tasks_to_add)
+
+print([task.content for task in tasks_to_add])
