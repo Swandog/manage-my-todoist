@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime, time
 import os
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 loglevel = os.environ.get("LOG_LEVEL") or "INFO"
@@ -40,6 +41,17 @@ def find_section_in_project(project: models.Project, section_name: str):
         api.get_sections(project_id=project.id), lambda s: s.name == section_name
     )
     return section
+
+
+def task_due_datetime(task: models.Task) -> Optional[datetime]:
+    if not task.due:
+        return None
+    else:
+        due = task.due.date
+        if isinstance(due, date):
+            return datetime.combine(due, time.min)
+        else:
+            return due
 
 
 do_every_day_project = find_project_by_name("Do Every Day")
@@ -108,16 +120,18 @@ oawt_tasks = [
 ]
 for task in oawt_tasks:
     logger.debug(f"Examining task {describe_task(task)} in Once A Week")
-    if not task.parent_id and task.due:
-        if task.due.date < datetime.now():
-            logger.info(
-                f"Recurring task {describe_task(task)} is overdue ({task.due.date}), moving to Today/Incoming"
-            )
-            api.move_task(task_id=task.id, section_id=incoming_section.id)
-        else:
-            logger.debug(
-                f"Found recurring task {describe_task(task)} in Once A Week but it is not overdue ({task.due.date})"
-            )
+    if not task.parent_id:
+        due = task_due_datetime(task)
+        if due:
+            if due < datetime.now():
+                logger.info(
+                    f"Recurring task {describe_task(task)} is overdue ({due}), moving to Today/Incoming"
+                )
+                api.move_task(task_id=task.id, section_id=incoming_section.id)
+            else:
+                logger.debug(
+                    f"Found recurring task {describe_task(task)} in Once A Week but it is not overdue ({due})"
+                )
 
 
 # If there are any Once A Week tasks in Today that are not due, move them to Once A Week
@@ -128,13 +142,15 @@ oawt_tasks_in_today = [
 ]
 for task in oawt_tasks_in_today:
     logger.debug(f"Examining Once A Week task {describe_task(task)} in Today")
-    if not task.parent_id and task.due:
-        if task.due.date > datetime.now():
-            logger.info(
-                f"Recurring task {describe_task(task)} is not due ({task.due.date}), moving to Once A Week"
-            )
-            api.move_task(task_id=task.id, project_id=once_a_week_project.id)
-        else:
-            logger.debug(
-                f"Found recurring task {describe_task(task)} in Today but it due ({task.due.date})"
-            )
+    if not task.parent_id:
+        due = task_due_datetime(task)
+        if due:
+            if due > datetime.now():
+                logger.info(
+                    f"Recurring task {describe_task(task)} is not due ({due}), moving to Once A Week"
+                )
+                api.move_task(task_id=task.id, project_id=once_a_week_project.id)
+            else:
+                logger.debug(
+                    f"Found recurring task {describe_task(task)} in Today but it due ({due})"
+                )
