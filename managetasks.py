@@ -152,5 +152,5 @@ for task in oawt_tasks_in_today:
                 api.move_task(task_id=task.id, project_id=once_a_week_project.id)
             else:
                 logger.debug(
-                    f"Found recurring task {describe_task(task)} in Today but it due ({due})"
+                    f"Found recurring task {describe_task(task)} in Today but it is due ({due})"
                 )
