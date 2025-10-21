@@ -109,6 +109,7 @@ for task in tasks_to_add:
         section_id=incoming_section.id,
         content=task.content,
         labels=[every_day_label],
+        description=task.description
     )
 
 ### Slower Recurrences!
