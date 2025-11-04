@@ -2,6 +2,7 @@ from datetime import date, datetime, time
 import os
 import logging
 from typing import Optional
+import itertools
 
 logger = logging.getLogger(__name__)
 loglevel = os.environ.get("LOG_LEVEL") or "INFO"
@@ -114,25 +115,29 @@ for task in tasks_to_add:
 
 ### Slower Recurrences!
 # If there are any Once A Week tasks in Once A Week that are due, move them to Today/Incoming
+# Also bring over any overdue tasks in the Inbox
 
 once_a_week_project = find_project_by_name("Once A Week")
-oawt_tasks = [
-    task for tasks in api.get_tasks(project_id=once_a_week_project.id) for task in tasks
-]
-for task in oawt_tasks:
-    logger.debug(f"Examining task {describe_task(task)} in Once A Week")
-    if not task.parent_id:
-        due = task_due_datetime(task)
-        if due:
-            if due < datetime.now():
-                logger.info(
-                    f"Recurring task {describe_task(task)} is overdue ({due}), moving to Today/Incoming"
-                )
-                api.move_task(task_id=task.id, section_id=incoming_section.id)
-            else:
-                logger.debug(
-                    f"Found recurring task {describe_task(task)} in Once A Week but it is not overdue ({due})"
-                )
+inbox_project = find_project_by_name("Inbox")
+tasks_to_examine = itertools.chain(
+    api.get_tasks(project_id=once_a_week_project.id),
+    api.get_tasks(project_id=inbox_project.id),
+)
+for task_list in tasks_to_examine:
+    for task in task_list:
+        logger.debug(f"Examining task {describe_task(task)} in Once A Week")
+        if not task.parent_id:
+            due = task_due_datetime(task)
+            if due:
+                if due < datetime.now():
+                    logger.info(
+                        f"Recurring task {describe_task(task)} is overdue ({due}), moving to Today/Incoming"
+                    )
+                    api.move_task(task_id=task.id, section_id=incoming_section.id)
+                else:
+                    logger.debug(
+                        f"Found recurring task {describe_task(task)} in Once A Week but it is not overdue ({due})"
+                    )
 
 
 # If there are any Once A Week tasks in Today that are not due, move them to Once A Week
