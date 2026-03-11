@@ -50,6 +50,10 @@ def main(api_token, loglevel, dry_run=False):
     logger = logging.getLogger(__name__)
     logger.setLevel(loglevel)
     sh = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt="%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    sh.setFormatter(formatter)
     logger.addHandler(sh)
 
     api = TodoistAPI(api_token)
